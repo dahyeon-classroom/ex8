@@ -1,217 +1,57 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width,initial-scale=1">
-
-<title>🫧 비눗방울 놀이 🫧</title>
+<title>비의 다양한 모습</title>
 
 <style>
 
-*{
+html,body{
 margin:0;
-padding:0;
-box-sizing:border-box;
-}
-
-body{
-
+height:100%;
 overflow:hidden;
-
-width:100vw;
-
-height:100vh;
-
 touch-action:none;
 
 background:
-
 linear-gradient(
 180deg,
-#aee3ff,
-#eafaff
+#4f6170,
+#7f93a5,
+#b7c3ce
 );
-
-position:relative;
 
 }
 
-/* 안내문 */
+canvas{
+display:block;
+}
 
-.guide{
+#label{
 
-position:absolute;
+position:fixed;
 
-top:20px;
+left:50%;
+top:50%;
 
-width:100%;
+transform:
+translate(-50%,-50%);
 
-text-align:center;
+font-size:34px;
 
-font-size:28px;
+font-weight:700;
 
 color:white;
 
+white-space:nowrap;
+
 text-shadow:
-0 2px 10px rgba(0,0,0,.15);
+0 0 18px black;
 
-}
+pointer-events:none;
 
-/* 무지개 */
-
-#rainbow{
-
-position:absolute;
-
-top:70px;
-
-left:50%;
-
-transform:
-translateX(-50%);
-
-font-size:120px;
-
-opacity:0;
-
-transition:1s;
-
-}
-
-.show{
-
-opacity:1!important;
-
-}
-
-/* 비눗방울 */
-
-.bubble{
-
-position:absolute;
-
-border-radius:50%;
-
-cursor:pointer;
-
-background:
-
-radial-gradient(
-
-circle at 30% 30%,
-
-rgba(
-255,
-255,
-255,
-0.95
-),
-
-rgba(
-255,
-255,
-255,
-0.18
-)
-
-);
-
-box-shadow:
-
-inset
--10px
--10px
-18px
-rgba(
-255,
-255,
-255,
-0.7),
-
-0
-0
-25px
-rgba(
-255,
-255,
-255,
-0.8);
-
-animation:
-
-float 8s linear;
-
-}
-
-/* 떠오르기 */
-
-@keyframes float{
-
-to{
-
-transform:
-translateY(
--120vh
-);
-
-}
-
-}
-
-/* 팡 */
-
-.pop{
-
-animation:
-
-pop .2s forwards;
-
-}
-
-@keyframes pop{
-
-to{
-
-transform:
-scale(
-1.7
-);
-
-opacity:0;
-
-}
-
-}
-
-/* 반짝 */
-
-.spark{
-
-position:absolute;
-
-font-size:40px;
-
-animation:
-
-spark .6s forwards;
-
-}
-
-@keyframes spark{
-
-to{
-
-transform:
-translateY(
--50px
-);
-
-opacity:0;
-
-}
+z-index:10;
 
 }
 
@@ -221,243 +61,558 @@ opacity:0;
 
 <body>
 
-<div class="guide">
+<canvas id="canvas"></canvas>
 
-🫧 화면을 눌러 비눗방울을 만들어 보세요 🫧
-
-</div>
-
-<div id="rainbow">
-
-🌈
-
+<div id="label">
+☁️ 화면을 터치해보세요 ☁️
 </div>
 
 <script>
 
-let score=0;
-
-/* 소리 */
-
-function playPop(){
+const canvas=
+document.getElementById(
+"canvas"
+);
 
 const ctx=
-
-new(
-window.AudioContext||
-
-window.webkitAudioContext
-
-)();
-
-const osc=
-
-ctx.createOscillator();
-
-const gain=
-
-ctx.createGain();
-
-osc.frequency.value=850;
-
-gain.gain.value=.03;
-
-osc.connect(
-gain
+canvas.getContext(
+"2d"
 );
 
-gain.connect(
-ctx.destination
-);
+function resize(){
 
-osc.start();
+canvas.width=
+innerWidth;
 
-osc.stop(
-ctx.currentTime+
-0.08
-
-);
+canvas.height=
+innerHeight;
 
 }
 
-/* 생성 */
+resize();
 
-function makeBubble(
-x,
-y
+addEventListener(
+"resize",
+resize
+);
+
+const label=
+document.getElementById(
+"label"
+);
+
+function show(text){
+
+label.innerHTML=
+text;
+
+clearTimeout(
+window.msg
+);
+
+window.msg=
+setTimeout(()=>{
+
+label.innerHTML=
+"☁️ 화면을 터치해보세요 ☁️"
+
+},3500);
+
+}
+
+class Drop{
+
+constructor(
+speed,
+size
 ){
 
-const bubble=
+this.speed=
+speed;
 
-document.createElement(
-"div"
+this.size=
+size;
+
+this.reset();
+
+}
+
+reset(){
+
+this.x=
+Math.random()
+*canvas.width;
+
+this.y=
+Math.random()
+*-canvas.height;
+
+this.len=
+20+
+Math.random()*40;
+
+}
+
+draw(){
+
+ctx.beginPath();
+
+ctx.strokeStyle=
+"rgba(240,248,255,.75)";
+
+ctx.lineWidth=
+this.size;
+
+ctx.moveTo(
+this.x,
+this.y
 );
 
-bubble.className=
-"bubble";
-
-const size=
-
-60+
-Math.random()*80;
-
-bubble.style.width=
-size+"px";
-
-bubble.style.height=
-size+"px";
-
-bubble.style.left=
-(
-x-
-size/2
-)
-+"px";
-
-bubble.style.top=
-(
-y-
-size/2
-)
-+"px";
-
-/* 터짐 */
-
-bubble.addEventListener(
-
-"pointerdown",
-
-function(e){
-
-e.stopPropagation();
-
-playPop();
-
-bubble.classList.add(
-"pop"
+ctx.lineTo(
+this.x,
+this.y+
+this.len
 );
 
-score++;
+ctx.stroke();
 
-const spark=
+}
 
-document.createElement(
-"div"
-);
+update(){
 
-spark.className=
-"spark";
-
-spark.innerHTML=
-"✨";
-
-spark.style.left=
-x+"px";
-
-spark.style.top=
-y+"px";
-
-document.body.append(
-spark
-);
-
-setTimeout(
-
-()=>spark.remove(),
-
-500
-
-);
+this.y+=
+this.speed;
 
 if(
-score>=15
+this.y>
+canvas.height
 ){
 
-document
+this.reset();
 
-.getElementById(
-"rainbow"
+}
+
+this.draw();
+
+}
+
+}
+
+let rain=[];
+
+function makeRain(
+count,
+speed,
+size
+){
+
+rain=[];
+
+for(
+let i=0;
+i<count;
+i++
+){
+
+rain.push(
+new Drop(
+speed,
+size
 )
-
-.classList
-
-.add(
-"show"
 );
 
 }
 
-setTimeout(
+}
 
-()=>bubble.remove(),
+function drawClouds(){
 
-180
+ctx.fillStyle=
+"rgba(255,255,255,.22)";
 
+for(
+let x=0;
+x<canvas.width;
+x+=180
+){
+
+ctx.beginPath();
+
+ctx.arc(
+x,
+80,
+55,
+0,
+7
+);
+
+ctx.arc(
+x+60,
+65,
+65,
+0,
+7
+);
+
+ctx.arc(
+x+120,
+80,
+55,
+0,
+7
+);
+
+ctx.fill();
+
+}
+
+}
+
+function animate(){
+
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+drawClouds();
+
+rain.forEach(
+v=>
+v.update()
+);
+
+requestAnimationFrame(
+animate
 );
 
 }
 
+animate();
+
+const audio=
+new AudioContext();
+
+let playing;
+
+function stopSound(){
+
+if(
+playing
+){
+
+playing.stop();
+
+}
+
+}
+
+function rainSound(
+volume
+){
+
+stopSound();
+
+const buffer=
+audio.createBuffer(
+1,
+audio.sampleRate*4,
+audio.sampleRate
 );
 
-document.body.append(
-bubble
+const data=
+buffer.getChannelData(
+0
+);
 
+for(
+let i=0;
+i<data.length;
+i++
+){
+
+data[i]=
+(
+Math.random()*2-1
+)
+*volume;
+
+}
+
+const source=
+audio.createBufferSource();
+
+source.buffer=
+buffer;
+
+const low=
+audio.createBiquadFilter();
+
+low.type=
+"lowpass";
+
+low.frequency.value=
+1500;
+
+source.connect(
+low
+);
+
+low.connect(
+audio.destination
+);
+
+source.start();
+
+playing=
+source;
+
+}
+
+function thunder(){
+
+document.body.style.filter=
+"brightness(2)";
+
+setTimeout(()=>{
+
+document.body.style.filter=
+"none";
+
+},250);
+
+rainSound(
+0.35
 );
 
 }
 
-/* 터치 생성 */
+function play(type){
 
-document.addEventListener(
+if(type==="투두둑"){
+
+makeRain(
+100,
+8,
+3
+);
+
+rainSound(
+0.04
+);
+
+show(
+"🌧️ 투두둑 🌧️"
+);
+
+}
+
+if(type==="부슬부슬"){
+
+makeRain(
+220,
+2,
+1
+);
+
+rainSound(
+0.02
+);
+
+show(
+"🌦️ 부슬부슬 🌦️"
+);
+
+}
+
+if(type==="주륵주륵"){
+
+makeRain(
+130,
+16,
+4
+);
+
+rainSound(
+0.08
+);
+
+show(
+"💧 주륵주륵 💧"
+);
+
+}
+
+if(type==="쏴아"){
+
+makeRain(
+800,
+26,
+2
+);
+
+rainSound(
+0.18
+);
+
+show(
+"🌧️ 쏴아 🌧️"
+);
+
+}
+
+if(type==="우르르쾅쾅"){
+
+makeRain(
+1200,
+30,
+3
+);
+
+thunder();
+
+show(
+"⚡ 우르르쾅쾅 ⚡"
+);
+
+}
+
+}
+
+let startX;
+
+let startY;
+
+let hold;
+
+let taps=[];
+
+addEventListener(
 
 "pointerdown",
 
 e=>{
 
-if(
-e.target.classList.contains(
-"bubble"
-)
-)
-return;
+startX=
+e.clientX;
 
-makeBubble(
+startY=
+e.clientY;
 
-e.clientX,
+hold=
+setTimeout(
+()=>{
 
-e.clientY
-
+play(
+"쏴아"
 );
+
+},
+800
+);
+
+taps.push(
+Date.now()
+);
+
+taps=
+taps.filter(
+v=>
+Date.now()-v
+<1500
+);
+
+if(
+taps.length===2
+){
+
+play(
+"투두둑"
+);
+
+}
+
+if(
+taps.length>=5
+){
+
+play(
+"우르르쾅쾅"
+);
+
+}
 
 }
 
 );
 
-/* 자동 생성 */
+addEventListener(
 
-setInterval(
+"pointermove",
 
-()=>{
+e=>{
 
-makeBubble(
+const dx=
+e.clientX-
+startX;
 
-Math.random()
+const dy=
+e.clientY-
+startY;
 
-*
-innerWidth,
+if(
+dx>180
+){
 
-innerHeight
+clearTimeout(
+hold
+);
+
+play(
+"🌦️ 부슬부슬 🌦️"
+);
+
+play(
+"부슬부슬"
+);
+
+}
+
+if(
+dy>180
+){
+
+clearTimeout(
+hold
+);
+
+play(
+"주륵주륵"
+);
+
+}
+
+}
 
 );
 
-},
+addEventListener(
 
-1400
+"pointerup",
+
+()=>{
+
+clearTimeout(
+hold
+);
+
+}
 
 );
 
 </script>
 
 </body>
-
 </html>
